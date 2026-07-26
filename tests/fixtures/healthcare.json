@@ -1,0 +1,706 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "description": "Authentication and user account information for all users (patients, doctors, admins).",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the user."
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "nullable": false,
+          "unique": true,
+          "description": "User email address, used for login and unique identification."
+        },
+        {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "nullable": false,
+          "description": "Hashed password for authentication."
+        },
+        {
+          "name": "role",
+          "type": "user_role",
+          "nullable": false,
+          "description": "User role: patient, doctor, or admin."
+        },
+        {
+          "name": "email_verified",
+          "type": "boolean",
+          "default": "false",
+          "nullable": false,
+          "description": "Indicates if the user's email has been verified."
+        },
+        {
+          "name": "last_login",
+          "type": "timestamptz",
+          "nullable": true,
+          "description": "Timestamp of the last successful login."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the user record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the user record was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        },
+        {
+          "columns": [
+            "role"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "patients",
+      "description": "Patient-specific profile information, linked to the users table.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the patient record."
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "unique": true,
+          "description": "Foreign key to users table, one-to-one relationship."
+        },
+        {
+          "name": "first_name",
+          "type": "varchar(100)",
+          "nullable": false,
+          "description": "Patient's first name."
+        },
+        {
+          "name": "last_name",
+          "type": "varchar(100)",
+          "nullable": false,
+          "description": "Patient's last name."
+        },
+        {
+          "name": "date_of_birth",
+          "type": "date",
+          "nullable": false,
+          "description": "Patient's date of birth."
+        },
+        {
+          "name": "phone",
+          "type": "varchar(20)",
+          "nullable": true,
+          "description": "Patient's phone number."
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "nullable": true,
+          "description": "Patient's residential address."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the patient record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the patient record was last updated."
+        }
+      ],
+      "foreignKeys": [
+        {
+          "columns": [
+            "user_id"
+          ],
+          "referencedTable": "users",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "user_id"
+          ],
+          "unique": true
+        },
+        {
+          "columns": [
+            "last_name"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "doctors",
+      "description": "Doctor-specific profile information, linked to the users table.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the doctor record."
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "unique": true,
+          "description": "Foreign key to users table, one-to-one relationship."
+        },
+        {
+          "name": "first_name",
+          "type": "varchar(100)",
+          "nullable": false,
+          "description": "Doctor's first name."
+        },
+        {
+          "name": "last_name",
+          "type": "varchar(100)",
+          "nullable": false,
+          "description": "Doctor's last name."
+        },
+        {
+          "name": "license_number",
+          "type": "varchar(50)",
+          "nullable": false,
+          "unique": true,
+          "description": "Professional medical license number."
+        },
+        {
+          "name": "phone",
+          "type": "varchar(20)",
+          "nullable": true,
+          "description": "Doctor's phone number."
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "nullable": true,
+          "description": "Doctor's contact email."
+        },
+        {
+          "name": "bio",
+          "type": "text",
+          "nullable": true,
+          "description": "Short biography or description of the doctor."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the doctor record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the doctor record was last updated."
+        }
+      ],
+      "foreignKeys": [
+        {
+          "columns": [
+            "user_id"
+          ],
+          "referencedTable": "users",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "user_id"
+          ],
+          "unique": true
+        },
+        {
+          "columns": [
+            "last_name"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "specialties",
+      "description": "Medical specialties that doctors can have (e.g., Cardiology, Pediatrics).",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the specialty."
+        },
+        {
+          "name": "name",
+          "type": "varchar(100)",
+          "nullable": false,
+          "unique": true,
+          "description": "Name of the medical specialty."
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "description": "Description of the specialty."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the specialty record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the specialty record was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "name"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "doctor_specialties",
+      "description": "Junction table linking doctors to their specialties (many-to-many).",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the relation."
+        },
+        {
+          "name": "doctor_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to doctors table."
+        },
+        {
+          "name": "specialty_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to specialties table."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the relation was created."
+        }
+      ],
+      "foreignKeys": [
+        {
+          "columns": [
+            "doctor_id"
+          ],
+          "referencedTable": "doctors",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        },
+        {
+          "columns": [
+            "specialty_id"
+          ],
+          "referencedTable": "specialties",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "columns": [
+            "doctor_id",
+            "specialty_id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "doctor_id"
+          ]
+        },
+        {
+          "columns": [
+            "specialty_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "schedules",
+      "description": "Doctor's available time slots for appointments.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the schedule slot."
+        },
+        {
+          "name": "doctor_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to doctors table."
+        },
+        {
+          "name": "start_time",
+          "type": "timestamptz",
+          "nullable": false,
+          "description": "Start time of the available slot."
+        },
+        {
+          "name": "end_time",
+          "type": "timestamptz",
+          "nullable": false,
+          "description": "End time of the available slot."
+        },
+        {
+          "name": "is_available",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false,
+          "description": "Whether the slot is currently available for booking."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the schedule record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the schedule record was last updated."
+        }
+      ],
+      "foreignKeys": [
+        {
+          "columns": [
+            "doctor_id"
+          ],
+          "referencedTable": "doctors",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "checks": [
+        {
+          "expression": "end_time > start_time",
+          "description": "End time must be after start time."
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "doctor_id"
+          ]
+        },
+        {
+          "columns": [
+            "start_time"
+          ]
+        },
+        {
+          "columns": [
+            "is_available"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "appointments",
+      "description": "Patient appointments with doctors, linked to schedule slots.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the appointment."
+        },
+        {
+          "name": "patient_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to patients table."
+        },
+        {
+          "name": "doctor_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to doctors table."
+        },
+        {
+          "name": "schedule_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to schedules table (the specific time slot)."
+        },
+        {
+          "name": "status",
+          "type": "appointment_status",
+          "nullable": false,
+          "default": "'pending'",
+          "description": "Current status of the appointment: pending, confirmed, or cancelled."
+        },
+        {
+          "name": "reason",
+          "type": "text",
+          "nullable": true,
+          "description": "Reason for the appointment as provided by the patient."
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "nullable": true,
+          "description": "Additional notes from the doctor or staff."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the appointment was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the appointment was last updated."
+        }
+      ],
+      "foreignKeys": [
+        {
+          "columns": [
+            "patient_id"
+          ],
+          "referencedTable": "patients",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        },
+        {
+          "columns": [
+            "doctor_id"
+          ],
+          "referencedTable": "doctors",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        },
+        {
+          "columns": [
+            "schedule_id"
+          ],
+          "referencedTable": "schedules",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "RESTRICT"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "patient_id"
+          ]
+        },
+        {
+          "columns": [
+            "doctor_id"
+          ]
+        },
+        {
+          "columns": [
+            "schedule_id"
+          ]
+        },
+        {
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "columns": [
+            "created_at"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "medical_histories",
+      "description": "Patient medical history records, containing diagnoses, allergies, medications, etc.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for the medical history record."
+        },
+        {
+          "name": "patient_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to patients table."
+        },
+        {
+          "name": "record_date",
+          "type": "date",
+          "nullable": false,
+          "description": "Date of the medical record entry."
+        },
+        {
+          "name": "diagnosis",
+          "type": "text",
+          "nullable": true,
+          "description": "Diagnosis description."
+        },
+        {
+          "name": "allergies",
+          "type": "text",
+          "nullable": true,
+          "description": "Known allergies."
+        },
+        {
+          "name": "medications",
+          "type": "text",
+          "nullable": true,
+          "description": "Current medications."
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "nullable": true,
+          "description": "Additional notes from the healthcare provider."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the medical history record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "nullable": false,
+          "description": "Timestamp when the medical history record was last updated."
+        }
+      ],
+      "foreignKeys": [
+        {
+          "columns": [
+            "patient_id"
+          ],
+          "referencedTable": "patients",
+          "referencedColumns": [
+            "id"
+          ],
+          "onDelete": "CASCADE"
+        }
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "patient_id"
+          ]
+        },
+        {
+          "columns": [
+            "record_date"
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "user_role",
+      "values": [
+        "patient",
+        "doctor",
+        "admin"
+      ]
+    },
+    {
+      "name": "appointment_status",
+      "values": [
+        "pending",
+        "confirmed",
+        "cancelled"
+      ]
+    }
+  ]
+}

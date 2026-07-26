@@ -1,0 +1,488 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "description": "Registered users of the blogging platform",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notNull": true,
+          "primaryKey": true,
+          "description": "Primary key, unique identifier for each user"
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "notNull": true,
+          "unique": true,
+          "description": "User email address, used for login and notifications"
+        },
+        {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "notNull": true,
+          "description": "BCrypt hash of the user's password"
+        },
+        {
+          "name": "username",
+          "type": "varchar(100)",
+          "notNull": true,
+          "unique": true,
+          "description": "Unique username for display and identification"
+        },
+        {
+          "name": "display_name",
+          "type": "varchar(255)",
+          "notNull": true,
+          "description": "Display name shown on posts and comments"
+        },
+        {
+          "name": "role",
+          "type": "user_role",
+          "notNull": true,
+          "default": "'author'",
+          "description": "User role: admin, author, or subscriber"
+        },
+        {
+          "name": "email_verified",
+          "type": "boolean",
+          "notNull": true,
+          "default": "false",
+          "description": "Whether the email address has been verified"
+        },
+        {
+          "name": "last_login",
+          "type": "timestamptz",
+          "notNull": false,
+          "description": "Timestamp of last successful login"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the user was created"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the user was last updated (managed by trigger)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        },
+        {
+          "name": "idx_users_username",
+          "columns": [
+            "username"
+          ],
+          "unique": true
+        },
+        {
+          "name": "idx_users_role",
+          "columns": [
+            "role"
+          ]
+        }
+      ],
+      "checks": []
+    },
+    {
+      "name": "categories",
+      "description": "Categories for organizing posts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notNull": true,
+          "primaryKey": true,
+          "description": "Primary key"
+        },
+        {
+          "name": "name",
+          "type": "varchar(100)",
+          "notNull": true,
+          "unique": true,
+          "description": "Category name"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "notNull": false,
+          "description": "Optional description of the category"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the category was created"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the category was last updated"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_categories_name",
+          "columns": [
+            "name"
+          ],
+          "unique": true
+        }
+      ],
+      "checks": []
+    },
+    {
+      "name": "tags",
+      "description": "Tags for labeling posts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notNull": true,
+          "primaryKey": true,
+          "description": "Primary key"
+        },
+        {
+          "name": "name",
+          "type": "varchar(100)",
+          "notNull": true,
+          "unique": true,
+          "description": "Tag name"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the tag was created"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the tag was last updated"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_tags_name",
+          "columns": [
+            "name"
+          ],
+          "unique": true
+        }
+      ],
+      "checks": []
+    },
+    {
+      "name": "posts",
+      "description": "Blog posts created by users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notNull": true,
+          "primaryKey": true,
+          "description": "Primary key"
+        },
+        {
+          "name": "title",
+          "type": "varchar(255)",
+          "notNull": true,
+          "description": "Post title"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(255)",
+          "notNull": true,
+          "unique": true,
+          "description": "URL-friendly slug derived from title"
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "notNull": true,
+          "description": "Post content (Markdown or HTML)"
+        },
+        {
+          "name": "status",
+          "type": "post_status",
+          "notNull": true,
+          "default": "'draft'",
+          "description": "Publication status: draft, published, archived"
+        },
+        {
+          "name": "published_at",
+          "type": "timestamptz",
+          "notNull": false,
+          "description": "Timestamp when the post was first published"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "notNull": true,
+          "references": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "CASCADE"
+          },
+          "description": "Foreign key to the author (user)"
+        },
+        {
+          "name": "category_id",
+          "type": "uuid",
+          "notNull": false,
+          "references": {
+            "table": "categories",
+            "column": "id",
+            "onDelete": "SET NULL"
+          },
+          "description": "Foreign key to the category (optional)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the post was created"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the post was last updated"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_posts_user_id",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "idx_posts_category_id",
+          "columns": [
+            "category_id"
+          ]
+        },
+        {
+          "name": "idx_posts_status",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "idx_posts_slug",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        },
+        {
+          "name": "idx_posts_created_at",
+          "columns": [
+            "created_at"
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_posts_title_not_empty",
+          "expression": "length(trim(title)) > 0"
+        }
+      ]
+    },
+    {
+      "name": "post_tags",
+      "description": "Junction table for many-to-many relationship between posts and tags",
+      "columns": [
+        {
+          "name": "post_id",
+          "type": "uuid",
+          "notNull": true,
+          "references": {
+            "table": "posts",
+            "column": "id",
+            "onDelete": "CASCADE"
+          },
+          "description": "Foreign key to the post"
+        },
+        {
+          "name": "tag_id",
+          "type": "uuid",
+          "notNull": true,
+          "references": {
+            "table": "tags",
+            "column": "id",
+            "onDelete": "CASCADE"
+          },
+          "description": "Foreign key to the tag"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_post_tags_post_id",
+          "columns": [
+            "post_id"
+          ]
+        },
+        {
+          "name": "idx_post_tags_tag_id",
+          "columns": [
+            "tag_id"
+          ]
+        }
+      ],
+      "checks": [],
+      "primaryKey": {
+        "columns": [
+          "post_id",
+          "tag_id"
+        ]
+      }
+    },
+    {
+      "name": "comments",
+      "description": "Comments on posts by users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notNull": true,
+          "primaryKey": true,
+          "description": "Primary key"
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "notNull": true,
+          "description": "Comment body"
+        },
+        {
+          "name": "status",
+          "type": "comment_status",
+          "notNull": true,
+          "default": "'pending'",
+          "description": "Moderation status: pending, approved, spam"
+        },
+        {
+          "name": "post_id",
+          "type": "uuid",
+          "notNull": true,
+          "references": {
+            "table": "posts",
+            "column": "id",
+            "onDelete": "CASCADE"
+          },
+          "description": "Foreign key to the post being commented on"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "notNull": false,
+          "references": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "SET NULL"
+          },
+          "description": "Foreign key to the comment author (nullable if user deleted)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the comment was created"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": "now()",
+          "notNull": true,
+          "description": "Timestamp when the comment was last updated"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_comments_post_id",
+          "columns": [
+            "post_id"
+          ]
+        },
+        {
+          "name": "idx_comments_user_id",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "idx_comments_status",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "idx_comments_created_at",
+          "columns": [
+            "created_at"
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_comments_content_not_empty",
+          "expression": "length(trim(content)) > 0"
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "user_role",
+      "values": [
+        "admin",
+        "author",
+        "subscriber"
+      ]
+    },
+    {
+      "name": "post_status",
+      "values": [
+        "draft",
+        "published",
+        "archived"
+      ]
+    },
+    {
+      "name": "comment_status",
+      "values": [
+        "pending",
+        "approved",
+        "spam"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,595 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "description": "User accounts for authentication and identification.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, auto-generated UUID."
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "nullable": false,
+          "unique": true,
+          "description": "User email, used for login and must be unique."
+        },
+        {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "nullable": false,
+          "description": "Bcrypt hash of the user's password."
+        },
+        {
+          "name": "role",
+          "type": "user_role",
+          "nullable": false,
+          "default": "'member'",
+          "description": "Role of the user: admin, member, or viewer."
+        },
+        {
+          "name": "email_verified",
+          "type": "boolean",
+          "nullable": false,
+          "default": false,
+          "description": "Indicates if the email has been verified."
+        },
+        {
+          "name": "last_login",
+          "type": "timestamptz",
+          "nullable": true,
+          "description": "Timestamp of the user's last login."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the user was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the user was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        },
+        {
+          "name": "idx_users_role",
+          "columns": [
+            "role"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "workspaces",
+      "description": "Workspaces that contain boards. Each workspace has an owner.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, auto-generated UUID."
+        },
+        {
+          "name": "name",
+          "type": "varchar(255)",
+          "nullable": false,
+          "description": "Name of the workspace."
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "description": "Optional description of the workspace."
+        },
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to the user who owns the workspace.",
+          "foreignKey": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "RESTRICT"
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the workspace was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the workspace was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_workspaces_owner_id",
+          "columns": [
+            "owner_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "workspace_members",
+      "description": "Many-to-many relationship between users and workspaces, indicating membership with a role.",
+      "columns": [
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Foreign key to workspace.",
+          "foreignKey": {
+            "table": "workspaces",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Foreign key to user.",
+          "foreignKey": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "role",
+          "type": "workspace_role",
+          "nullable": false,
+          "default": "'member'",
+          "description": "Role of the user in the workspace: admin or member."
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when membership was created."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_workspace_members_user_id",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "boards",
+      "description": "Boards that belong to a workspace. They contain lists.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, auto-generated UUID."
+        },
+        {
+          "name": "title",
+          "type": "varchar(255)",
+          "nullable": false,
+          "description": "Title of the board."
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "description": "Optional description of the board."
+        },
+        {
+          "name": "visibility",
+          "type": "board_visibility",
+          "nullable": false,
+          "default": "'workspace'",
+          "description": "Visibility level: public, private, or workspace."
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to the workspace containing this board.",
+          "foreignKey": {
+            "table": "workspaces",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "nullable": true,
+          "description": "Foreign key to the user who created the board.",
+          "foreignKey": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "SET NULL"
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the board was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the board was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_boards_workspace_id",
+          "columns": [
+            "workspace_id"
+          ]
+        },
+        {
+          "name": "idx_boards_created_by",
+          "columns": [
+            "created_by"
+          ]
+        },
+        {
+          "name": "idx_boards_visibility",
+          "columns": [
+            "visibility"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "lists",
+      "description": "Lists within a board, representing columns like To Do, In Progress, Done.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, auto-generated UUID."
+        },
+        {
+          "name": "title",
+          "type": "varchar(255)",
+          "nullable": false,
+          "description": "Title of the list."
+        },
+        {
+          "name": "position",
+          "type": "integer",
+          "nullable": false,
+          "default": 0,
+          "description": "Order of the list within the board, used for sorting."
+        },
+        {
+          "name": "board_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to the board containing this list.",
+          "foreignKey": {
+            "table": "boards",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the list was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the list was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_lists_board_id",
+          "columns": [
+            "board_id"
+          ]
+        },
+        {
+          "name": "idx_lists_position",
+          "columns": [
+            "board_id",
+            "position"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cards",
+      "description": "Cards within a list, representing tasks or items.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, auto-generated UUID."
+        },
+        {
+          "name": "title",
+          "type": "varchar(255)",
+          "nullable": false,
+          "description": "Title of the card."
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "description": "Optional detailed description of the card."
+        },
+        {
+          "name": "position",
+          "type": "integer",
+          "nullable": false,
+          "default": 0,
+          "description": "Order of the card within the list, used for sorting."
+        },
+        {
+          "name": "due_date",
+          "type": "timestamptz",
+          "nullable": true,
+          "description": "Optional due date for the card."
+        },
+        {
+          "name": "list_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to the list containing this card.",
+          "foreignKey": {
+            "table": "lists",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "nullable": true,
+          "description": "Foreign key to the user who created the card.",
+          "foreignKey": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "SET NULL"
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the card was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the card was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_cards_list_id",
+          "columns": [
+            "list_id"
+          ]
+        },
+        {
+          "name": "idx_cards_position",
+          "columns": [
+            "list_id",
+            "position"
+          ]
+        },
+        {
+          "name": "idx_cards_due_date",
+          "columns": [
+            "due_date"
+          ]
+        },
+        {
+          "name": "idx_cards_created_by",
+          "columns": [
+            "created_by"
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "name": "chk_cards_position_non_negative",
+          "expression": "position >= 0"
+        }
+      ]
+    },
+    {
+      "name": "card_assignments",
+      "description": "Many-to-many relationship between cards and users, representing assigned members.",
+      "columns": [
+        {
+          "name": "card_id",
+          "type": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Foreign key to the card.",
+          "foreignKey": {
+            "table": "cards",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Foreign key to the user assigned to the card.",
+          "foreignKey": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "assigned_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the user was assigned to the card."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_card_assignments_user_id",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "comments",
+      "description": "Comments left on cards by users.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false,
+          "primaryKey": true,
+          "description": "Primary key, auto-generated UUID."
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": false,
+          "description": "The text content of the comment."
+        },
+        {
+          "name": "card_id",
+          "type": "uuid",
+          "nullable": false,
+          "description": "Foreign key to the card the comment belongs to.",
+          "foreignKey": {
+            "table": "cards",
+            "column": "id",
+            "onDelete": "CASCADE"
+          }
+        },
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "nullable": true,
+          "description": "Foreign key to the user who wrote the comment. Nullable to preserve comment if user is deleted.",
+          "foreignKey": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "SET NULL"
+          }
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the comment was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "description": "Timestamp when the comment was last updated."
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_comments_card_id",
+          "columns": [
+            "card_id"
+          ]
+        },
+        {
+          "name": "idx_comments_author_id",
+          "columns": [
+            "author_id"
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    {
+      "name": "user_role",
+      "values": [
+        "admin",
+        "member",
+        "viewer"
+      ]
+    },
+    {
+      "name": "workspace_role",
+      "values": [
+        "admin",
+        "member"
+      ]
+    },
+    {
+      "name": "board_visibility",
+      "values": [
+        "public",
+        "private",
+        "workspace"
+      ]
+    }
+  ]
+}
