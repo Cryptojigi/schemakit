@@ -9,7 +9,7 @@ export interface FileContent {
 export async function createZipStream(files: FileContent[]): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     // @ts-ignore
-    const archive = archiver("zip", { zlib: { level: 9 } });
+    const archive = new archiver.ZipArchive({ zlib: { level: 9 } });
     const chunks: Buffer[] = [];
     
     const stream = new Writable({
