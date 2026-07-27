@@ -73,12 +73,11 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 
     const filename = `schemakit-${validated.description.slice(0, 15).replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.zip`;
     
-    // Return base64 JSON payload for A2MCP compatibility
+    // Return base64 JSON payload for A2MCP compatibility matching Forma schema
     res.json({
-      success: true,
-      filename,
-      stats,
-      generationTimeMs: duration,
+      status: "success",
+      fileName: filename,
+      metadata: stats,
       fileData: zipBuffer.toString("base64")
     });
   } catch (error) {
