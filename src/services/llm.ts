@@ -23,6 +23,7 @@ RULES:
 11. Include a \`description\` field for every table and column — these become code comments and API documentation.
 12. Limit output to the tables directly described or clearly implied. Don't invent tables the user didn't ask for (except junction tables for many-to-many relationships).
 13. For many-to-many relationships, create explicit junction tables.
+14. REQUIRED FIELDS: The root JSON object MUST include "projectName" (string) and "database" (string). Every object in a table's "indexes" array MUST include a "name" (string) property.
 
 OUTPUT FORMAT: Respond ONLY with the JSON object. No markdown, no explanation, no code fences.`;
 

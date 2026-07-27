@@ -1,4 +1,4 @@
-import archiver from "archiver";
+import archiver = require("archiver");
 import { Writable } from "stream";
 
 export interface FileContent {
