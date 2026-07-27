@@ -9,7 +9,7 @@ import { OKXFacilitatorClient } from '@okxweb3/x402-core';
 const logger = pino();
 const router = Router();
 
-const NETWORK = `eip155:${process.env.CHAIN_ID || '1952'}`;
+const NETWORK = `eip155:${process.env.CHAIN_ID || '196'}`;
 const PAY_TO = process.env.RECEIVING_WALLET_ADDRESS || '';
 
 // 1. Facilitator
