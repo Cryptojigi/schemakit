@@ -38,7 +38,7 @@ export function generateMigration(schema: SchemaDefinition): string {
 
   // Drop enums
   if (schema.database === "postgresql") {
-    for (const enm of schema.enums) {
+    for (const enm of (schema.enums || [])) {
       migration += `DROP TYPE IF EXISTS ${enm.name};\n`;
     }
   }

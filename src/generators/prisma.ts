@@ -16,7 +16,7 @@ datasource db {
 `;
 
   // Enums
-  for (const enm of schema.enums) {
+  for (const enm of (schema.enums || [])) {
     prisma += `enum ${toPascalCase(enm.name)} {\n`;
     for (const val of enm.values) {
       prisma += `  ${val}\n`;
@@ -32,7 +32,7 @@ datasource db {
     prisma += `model ${toPascalCase(table.name)} {\n`;
 
     for (const col of table.columns) {
-      let type = mapSQLTypeToPrisma(col.type, schema.enums);
+      let type = mapSQLTypeToPrisma(col.type, schema.enums || []);
       if (col.nullable && !col.primaryKey) type += "?";
       
       let attributes = "";

@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(limiter);
 
 // Health check endpoint
-app.get("/api/schema/health", (req, res) => {
+app.get("/api/schema/health", (req: express.Request, res: express.Response) => {
   res.json({ status: "ok", service: "schemakit" });
 });
 

@@ -16,7 +16,7 @@ export function generateDrizzle(schema: SchemaDefinition): string {
 
   // Enums
   if (schema.database === "postgresql") {
-    for (const enm of schema.enums) {
+    for (const enm of (schema.enums || [])) {
       const values = enm.values.map(v => `'${v}'`).join(", ");
       ts += `export const ${toCamelCase(enm.name)}Enum = pgEnum("${enm.name}", [${values}]);\n`;
     }
@@ -33,7 +33,7 @@ export function generateDrizzle(schema: SchemaDefinition): string {
     
     for (const col of table.columns) {
       let colDef = `  ${toCamelCase(col.name)}: `;
-      let drizzleType = mapSQLTypeToDrizzle(col.type, schema.enums, schema.database);
+      let drizzleType = mapSQLTypeToDrizzle(col.type, schema.enums || [], schema.database);
       
       colDef += `${drizzleType}("${col.name}")`;
 
@@ -42,7 +42,7 @@ export function generateDrizzle(schema: SchemaDefinition): string {
       if (col.unique && !col.primaryKey) colDef += `.unique()`;
       
       if (col.references) {
-        colDef += `.references(() => ${toCamelCase(col.references.table)}.${toCamelCase(col.references.column)}, { onDelete: "${col.references.onDelete.toLowerCase()}" })`;
+        colDef += `.references(() => ${toCamelCase(col.references.table)}.${toCamelCase(col.references.column)}, { onDelete: "${col.references.onDelete?.toLowerCase() || 'no action'}" })`;
       }
       
       if (col.defaultValue) {

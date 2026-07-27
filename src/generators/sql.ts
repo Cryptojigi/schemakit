@@ -9,9 +9,10 @@ export function generateSQL(schema: SchemaDefinition): string {
 `;
 
   // Generate Enums for PostgreSQL
-  if (schema.database === "postgresql" && schema.enums.length > 0) {
+  // Generate Enums for PostgreSQL
+  if (schema.database === "postgresql" && (schema.enums || []).length > 0) {
     sql += `-- Enums\n`;
-    for (const enm of schema.enums) {
+    for (const enm of (schema.enums || [])) {
       const values = enm.values.map((v) => `'${v}'`).join(", ");
       sql += `CREATE TYPE ${enm.name} AS ENUM (${values});\n`;
     }
@@ -32,8 +33,9 @@ export function generateSQL(schema: SchemaDefinition): string {
       let def = `  ${col.name} ${col.type}`;
       
       // Handle enum types for non-postgres or inline
-      if (schema.database !== "postgresql" && schema.enums.some(e => e.name === col.type)) {
-        const enm = schema.enums.find(e => e.name === col.type)!;
+      // Handle enum types for non-postgres or inline
+      if (schema.database !== "postgresql" && (schema.enums || []).some(e => e.name === col.type)) {
+        const enm = (schema.enums || []).find(e => e.name === col.type)!;
         const values = enm.values.map(v => `'${v}'`).join(", ");
         def = `  ${col.name} ENUM(${values})`;
       }
@@ -70,7 +72,8 @@ export function generateSQL(schema: SchemaDefinition): string {
     sql += `\n);\n\n`;
 
     // Indexes
-    for (const idx of table.indexes) {
+    // Indexes
+    for (const idx of (table.indexes || [])) {
       const type = idx.type ? ` USING ${idx.type}` : "";
       const unique = idx.unique ? "UNIQUE " : "";
       sql += `CREATE ${unique}INDEX ${idx.name} ON ${table.name}${type} (${idx.columns.join(", ")});\n`;
@@ -78,7 +81,7 @@ export function generateSQL(schema: SchemaDefinition): string {
     
     // Auto index foreign keys
     for (const col of table.columns) {
-      if (col.references && !table.indexes.some(i => i.columns.includes(col.name))) {
+      if (col.references && !(table.indexes || []).some(i => i.columns.includes(col.name))) {
         sql += `CREATE INDEX idx_${table.name}_${col.name} ON ${table.name} (${col.name});\n`;
       }
     }
