@@ -25,13 +25,13 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Apply rate limiter to all routes
-app.use(limiter);
-
 // Health check endpoint
 app.get("/api/schema/health", (req: express.Request, res: express.Response) => {
   res.json({ status: "ok", service: "schemakit" });
 });
+
+// Apply rate limiter to expensive API routes
+app.use("/api/schema", limiter);
 
 // Main router
 app.use("/api/schema/generate", schemaRoutes);
