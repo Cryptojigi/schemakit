@@ -9,7 +9,7 @@ import { OKXFacilitatorClient } from '@okxweb3/x402-core';
 const logger = pino();
 const router = Router();
 
-const NETWORK = `eip155:${process.env.CHAIN_ID || '196'}`;
+const NETWORK = `eip155:${process.env.CHAIN_ID || '1952'}`;
 const PAY_TO = process.env.RECEIVING_WALLET_ADDRESS || '';
 
 // 1. Facilitator
@@ -23,10 +23,10 @@ const facilitatorClient = new OKXFacilitatorClient({
 const resourceServer = new x402ResourceServer(facilitatorClient);
 resourceServer.register(NETWORK as `${string}:${string}`, new ExactEvmScheme());
 
-// 3. Define paid routes
+// 3. Define paid routes (Exact match for Express router paths)
 const paymentConfig: Record<string, any> = {
   // Always register both GET and POST
-  'GET /generate': {
+  'GET /': {
     accepts: [{
       scheme: 'exact',
       network: NETWORK,
@@ -36,7 +36,7 @@ const paymentConfig: Record<string, any> = {
     description: 'Schemakit Backend Generation',
     mimeType: 'application/json',
   },
-  'POST /generate': {
+  'POST /': {
     accepts: [{
       scheme: 'exact',
       network: NETWORK,
@@ -48,11 +48,16 @@ const paymentConfig: Record<string, any> = {
   },
 };
 
-// 4. Apply the middleware
+// 4. Apply the middleware to all routes in this router
 router.use(paymentMiddleware(paymentConfig, resourceServer));
 
-// 5. Endpoint: POST /api/schema/generate
-router.post("/generate", async (req: Request, res: Response, next: NextFunction) => {
+// 5. Endpoint: GET /api/schema/generate (Dummy endpoint for OKX scanner)
+router.get("/", (req: Request, res: Response) => {
+  res.json({ status: "ready", message: "Schemakit API is ready for POST requests." });
+});
+
+// 6. Endpoint: POST /api/schema/generate
+router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   
   try {
@@ -66,16 +71,16 @@ router.post("/generate", async (req: Request, res: Response, next: NextFunction)
     const duration = Date.now() - startTime;
     logger.info({ msg: "Generation complete", durationMs: duration, stats });
 
-    // 3. Set headers and stream response
     const filename = `schemakit-${validated.description.slice(0, 15).replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.zip`;
     
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.setHeader("X-Schemakit-Tables", stats.tableCount.toString());
-    res.setHeader("X-Schemakit-Endpoints", stats.endpointCount.toString());
-    res.setHeader("X-Schemakit-Generation-Time", `${duration}ms`);
-    
-    res.send(zipBuffer);
+    // Return base64 JSON payload for A2MCP compatibility
+    res.json({
+      success: true,
+      filename,
+      stats,
+      generationTimeMs: duration,
+      fileData: zipBuffer.toString("base64")
+    });
   } catch (error) {
     next(error);
   }

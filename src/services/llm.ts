@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { SchemaDefinition } from "../types/schema";
+import { SchemaDefinition, SchemaDefinitionSchema } from "../types/schema";
 import { GenerateSchemaRequestType } from "../types/request";
 import pino from "pino";
 
@@ -32,11 +32,6 @@ export async function generateSchemaDefinition(request: GenerateSchemaRequestTyp
     throw new Error("DEEPSEEK_API_KEY is not configured");
   }
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com"
-  });
-
   const userPrompt = `Design the complete database schema for this application:
 
 """
@@ -50,30 +45,55 @@ Include soft delete: ${request.options.includeSoftDelete}
 
 Output the SchemaDefinition JSON.`;
 
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: userPrompt },
+  ];
+
   logger.info({ msg: "Calling DeepSeek LLM", descriptionLength: request.description.length });
 
-  const response = await client.chat.completions.create({
-    model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userPrompt },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.3,
-    max_tokens: 32000,
-    top_p: 0.9,
-  });
+  let lastError = null;
 
-  const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error("Empty response from LLM");
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await fetch(`${process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com"}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+          messages,
+          max_tokens: 32000,
+          temperature: 0.2,
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`DeepSeek API Error: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+      
+      const parsedJSON = JSON.parse(content);
+      const validatedSchema = SchemaDefinitionSchema.parse(parsedJSON);
+      
+      return validatedSchema as SchemaDefinition;
+      
+    } catch (error: any) {
+      lastError = error;
+      logger.warn({ msg: `LLM attempt ${attempt} failed`, error: error.message });
+      
+      messages.push({
+        role: "user",
+        content: `Your previous output failed validation with error: ${error.message}. Return ONLY a strictly valid JSON object matching the SchemaDefinition.`
+      });
+    }
   }
 
-  try {
-    const parsed = JSON.parse(content) as SchemaDefinition;
-    return parsed;
-  } catch (error) {
-    logger.error({ msg: "Failed to parse LLM output as JSON", content });
-    throw new Error("LLM output was not valid JSON");
-  }
+  throw new Error(`LLM generation failed after 3 attempts. Last error: ${lastError?.message}`);
 }

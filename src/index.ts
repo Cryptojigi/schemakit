@@ -34,7 +34,7 @@ app.get("/api/schema/health", (req, res) => {
 });
 
 // Main router
-app.use("/api/schema", schemaRoutes);
+app.use("/api/schema/generate", schemaRoutes);
 
 // Global Error Handler
 app.use(errorHandler);

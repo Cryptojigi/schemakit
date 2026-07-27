@@ -1,8 +1,8 @@
 {
   "name": "schemakit",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI-powered database schema and backend generation API powered by DeepSeek and OKX x402",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

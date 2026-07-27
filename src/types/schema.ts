@@ -1,65 +1,83 @@
+import { z } from "zod";
+
 export interface SchemaDefinition {
   projectName: string;
   database: "postgresql" | "mysql" | "sqlite";
   tables: TableDefinition[];
-  enums: EnumDefinition[];
+  enums?: EnumDefinition[];
 }
 
 export interface TableDefinition {
-  name: string;                    // snake_case: "loan_positions"
-  description: string;             // "Tracks individual loan positions within vaults"
+  name: string;
+  description?: string;
   columns: ColumnDefinition[];
-  indexes: IndexDefinition[];
-  timestamps: boolean;             // auto-add created_at, updated_at
-  softDelete: boolean;             // auto-add deleted_at
+  indexes?: IndexDefinition[];
+  timestamps?: boolean;
+  softDelete?: boolean;
 }
 
 export interface ColumnDefinition {
-  name: string;                    // snake_case: "health_factor"
-  type: SQLType;                   // "varchar(255)" | "integer" | "decimal(18,8)" | etc.
-  nullable: boolean;
-  unique: boolean;
-  primaryKey: boolean;
-  defaultValue?: string;           // "now()" | "'active'" | "0" | "gen_random_uuid()"
-  references?: {                   // Foreign key
+  name: string;
+  type: string;
+  nullable?: boolean;
+  unique?: boolean;
+  primaryKey?: boolean;
+  defaultValue?: string;
+  references?: {
     table: string;
     column: string;
-    onDelete: "CASCADE" | "SET NULL" | "RESTRICT" | "NO ACTION";
+    onDelete?: string;
   };
-  check?: string;                  // CHECK constraint: "health_factor > 0"
-  description: string;             // "Current health factor of the loan position"
+  check?: string;
+  description?: string;
 }
 
 export interface IndexDefinition {
   name: string;
   columns: string[];
-  unique: boolean;
-  type?: "btree" | "hash" | "gin" | "gist";
+  unique?: boolean;
+  type?: string;
 }
 
 export interface EnumDefinition {
-  name: string;                    // "loan_status"
-  values: string[];                // ["active", "liquidated", "repaid", "defaulted"]
+  name: string;
+  values: string[];
 }
 
-export type SQLType =
-  | "uuid"
-  | "serial"
-  | "bigserial"
-  | "integer"
-  | "bigint"
-  | "smallint"
-  | "boolean"
-  | "varchar(255)"
-  | `varchar(${number})`
-  | "text"
-  | `decimal(${number},${number})`
-  | "real"
-  | "double precision"
-  | "timestamp"
-  | "timestamptz"
-  | "date"
-  | "time"
-  | "json"
-  | "jsonb"
-  | "bytea";
+export const ColumnDefinitionSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  primaryKey: z.boolean().optional(),
+  nullable: z.boolean().optional(),
+  unique: z.boolean().optional(),
+  defaultValue: z.string().optional(),
+  description: z.string().optional(),
+  references: z.object({
+    table: z.string(),
+    column: z.string(),
+    onDelete: z.string().optional()
+  }).optional()
+});
+
+export const TableDefinitionSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  timestamps: z.boolean().optional(),
+  softDelete: z.boolean().optional(),
+  columns: z.array(ColumnDefinitionSchema),
+  indexes: z.array(z.object({
+    name: z.string(),
+    columns: z.array(z.string()),
+    unique: z.boolean().optional()
+  })).optional()
+});
+
+export const SchemaDefinitionSchema = z.object({
+  projectName: z.string(),
+  database: z.string(),
+  tables: z.array(TableDefinitionSchema),
+  enums: z.array(z.object({
+    name: z.string(),
+    values: z.array(z.string())
+  })).optional()
+});

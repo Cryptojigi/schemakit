@@ -9,8 +9,7 @@ export const GenerateSchemaRequest = z.object({
     includeAuth: z.boolean().default(true),
     includeTimestamps: z.boolean().default(true),
     includeSoftDelete: z.boolean().default(false),
-    seedCount: z.number().min(0).max(100).default(30),
-    namingConvention: z.enum(["snake_case", "camelCase"]).default("snake_case"),
+    seedCount: z.number().min(0).max(100).default(30)
   }).default({} as any)
 });
 
