@@ -101,7 +101,7 @@ export async function seedEngine(context: EngineContext): Promise<EngineResult> 
   return {
     action: "seed",
     analysis: llmOutput.analysis,
-    resultString: sqlChunks.join('\\n\\n'),
+    resultString: sqlChunks.join('\n\n'),
     warnings: llmOutput.warnings,
     tablesAffected: sortedTables.length
   };
