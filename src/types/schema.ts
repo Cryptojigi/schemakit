@@ -47,37 +47,37 @@ export interface EnumDefinition {
 export const ColumnDefinitionSchema = z.object({
   name: z.string(),
   type: z.string(),
-  primaryKey: z.boolean().optional(),
-  nullable: z.boolean().optional(),
-  unique: z.boolean().optional(),
-  defaultValue: z.string().optional(),
-  description: z.string().optional(),
+  primaryKey: z.boolean().nullable().optional(),
+  nullable: z.boolean().nullable().optional(),
+  unique: z.boolean().nullable().optional(),
+  defaultValue: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
   references: z.object({
     table: z.string(),
     column: z.string(),
-    onDelete: z.string().optional()
-  }).optional()
+    onDelete: z.string().nullable().optional()
+  }).nullable().optional()
 });
 
 export const TableDefinitionSchema = z.object({
   name: z.string(),
-  description: z.string().optional(),
-  timestamps: z.boolean().optional(),
-  softDelete: z.boolean().optional(),
+  description: z.string().nullable().optional(),
+  timestamps: z.boolean().nullable().optional(),
+  softDelete: z.boolean().nullable().optional(),
   columns: z.array(ColumnDefinitionSchema),
   indexes: z.array(z.object({
     name: z.string(),
     columns: z.array(z.string()),
-    unique: z.boolean().optional()
-  })).optional()
+    unique: z.boolean().nullable().optional()
+  })).nullable().optional()
 });
 
 export const SchemaDefinitionSchema = z.object({
-  projectName: z.string(),
-  database: z.string(),
+  projectName: z.string().default("Project"),
+  database: z.string().default("postgresql"),
   tables: z.array(TableDefinitionSchema),
   enums: z.array(z.object({
     name: z.string(),
     values: z.array(z.string())
-  })).optional()
+  })).nullable().optional()
 });

@@ -9,7 +9,7 @@ Your job is to read raw database schema inputs (which might be SQL DDL, Prisma s
 
 RULES:
 1. Extract all tables, columns, constraints, foreign keys, and indexes accurately.
-2. Infer the database dialect (postgresql, mysql, sqlite) from the syntax if possible, otherwise default to postgresql.
+2. REQUIRED ROOT FIELDS: You MUST include "projectName": "Project" and "database": "postgresql" (or mysql/sqlite) at the root level of the JSON object.
 3. Preserve any valuable developer comments as descriptions.
 4. If the input is severely truncated or malformed, extract whatever is structurally viable. Do not invent missing tables.
 5. The output MUST be purely the valid JSON object. No markdown wrapping.
