@@ -6,6 +6,10 @@ import { TableDefinition } from "../../types/schema";
 const logger = pino();
 
 async function callEngineLLM(systemPrompt: string, userPrompt: string, context: EngineContext): Promise<any> {
+  const schemaContextStr = context.normalized.schema
+    ? JSON.stringify(context.normalized.schema)
+    : context.normalized.originalText;
+
   const response = await fetch(`${process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com"}/chat/completions`, {
     method: "POST",
     headers: {
@@ -16,9 +20,9 @@ async function callEngineLLM(systemPrompt: string, userPrompt: string, context: 
       model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `Context:\nDialect: ${context.normalized.dialect}\nSchema: ${JSON.stringify(context.normalized.schema)}\n\nUser Request:\n${userPrompt}` }
+        { role: "user", content: `Context:\nDialect: ${context.normalized.dialect || 'postgresql'}\nSchema:\n${schemaContextStr}\n\nUser Request:\n${userPrompt}` }
       ],
-      max_tokens: 16000,
+      max_tokens: 8000,
       temperature: 0.2,
       response_format: { type: "json_object" }
     })
