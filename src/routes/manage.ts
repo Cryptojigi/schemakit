@@ -48,19 +48,31 @@ const paymentConfig: Record<string, any> = {
   },
 };
 
-// 4. Apply the middleware to all routes in this router
+// 4. Pre-Validation Middleware (Fails fast before 402 Payment Challenge)
+router.post("/", (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Validate request structure before issuing a 402 challenge
+    // This ensures agents get SCHEMA_REQUIRED guidance immediately without signing a doomed payment
+    ManageDatabaseRequest.parse(req.body);
+    next();
+  } catch (error) {
+    next(error); // Sent to global error handler
+  }
+});
+
+// 5. Apply the middleware to all routes in this router
 router.use(paymentMiddleware(paymentConfig, resourceServer));
 
-// 5. Endpoint: GET / (Dummy endpoint for OKX scanner)
+// 6. Endpoint: GET / (Dummy endpoint for OKX scanner)
 router.get("/", (req: Request, res: Response) => {
   res.json({ status: "ready", message: "Schemakit Database Manager API is ready for POST requests." });
 });
 
-// 6. Endpoint: POST /
+// 7. Endpoint: POST /
 router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 1. Validate request body
-    const validated = ManageDatabaseRequest.parse(req.body);
+    // 1. Validate request body (Already validated in pre-flight, but we cast it here for TS)
+    const validated = req.body as typeof ManageDatabaseRequest._type;
     
     // 2. Process via LLM
     logger.info({ msg: "Starting database management action", action: validated.action });

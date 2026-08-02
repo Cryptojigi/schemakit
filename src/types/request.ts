@@ -17,7 +17,7 @@ export type GenerateSchemaRequestType = z.infer<typeof GenerateSchemaRequest>;
 
 export const ManageDatabaseRequest = z.object({
   action: z.enum(["migrate", "optimize", "seed", "query"]),
-  schemaBase64: z.string().min(1, "Schema cannot be empty"),
+  schemaBase64: z.string().min(16, "Schema cannot be empty or too short"),
   prompt: z.string().min(3, "Prompt must be at least 3 characters").max(5000, "Prompt too long")
 });
 
