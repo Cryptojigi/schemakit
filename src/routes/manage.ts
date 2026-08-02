@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ManageDatabaseRequest } from "../types/request";
+import { ManageDatabaseRequest, ManageDatabaseRequestType } from "../types/request";
 import { manageDatabaseLLM } from "../services/manageLLM";
 import pino from "pino";
 import { paymentMiddleware, x402ResourceServer } from '@okxweb3/x402-express';
@@ -72,7 +72,7 @@ router.get("/", (req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     // 1. Validate request body (Already validated in pre-flight, but we cast it here for TS)
-    const validated = req.body as typeof ManageDatabaseRequest._type;
+    const validated = req.body as ManageDatabaseRequestType;
     
     // 2. Process via LLM
     logger.info({ msg: "Starting database management action", action: validated.action });
