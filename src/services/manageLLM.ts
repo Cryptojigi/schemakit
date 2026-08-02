@@ -5,6 +5,7 @@ import { migrateEngine, optimizeEngine, queryEngine, seedEngine } from "./manage
 import { applySafetyRules } from "./manage/safety";
 import { composeRichResult } from "./manage/resultComposer";
 import { EngineContext, EngineResult } from "./manage/types";
+import { SchemaRequiredError } from "../utils/errors";
 
 const logger = pino();
 
@@ -33,7 +34,7 @@ async function executeManageFlow(request: ManageDatabaseRequestType): Promise<Ma
     throw new Error("Schema is too large. Maximum supported size is ~100k characters.");
   }
   if (schemaText.length < 10) {
-    throw new Error("Decoded schema is empty or too short.");
+    throw new SchemaRequiredError("Decoded schema is empty or too short.");
   }
 
   // 2. Schema Normalization (LLM Call 1 - if needed)
