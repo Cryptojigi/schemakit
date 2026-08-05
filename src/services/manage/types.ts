@@ -12,6 +12,7 @@ export interface NormalizedSchemaContext {
 export interface EngineContext {
   request: ManageDatabaseRequestType;
   normalized: NormalizedSchemaContext;
+  signal: AbortSignal;
 }
 
 export interface EngineResult {

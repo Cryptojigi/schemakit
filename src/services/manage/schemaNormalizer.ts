@@ -15,7 +15,7 @@ RULES:
 5. The output MUST be purely the valid JSON object. No markdown wrapping.
 `;
 
-export async function normalizeSchema(rawText: string): Promise<NormalizedSchemaContext> {
+export async function normalizeSchema(rawText: string, action: string, signal?: AbortSignal): Promise<NormalizedSchemaContext> {
   // 1. Check if it's already a valid SchemaDefinition JSON
   try {
     const parsed = JSON.parse(rawText);
@@ -37,11 +37,24 @@ export async function normalizeSchema(rawText: string): Promise<NormalizedSchema
   else if (rawText.includes('generator client') || rawText.includes('model ')) formatDetected = 'prisma';
   else if (rawText.includes('pgTable') || rawText.includes('mysqlTable')) formatDetected = 'drizzle';
 
+  // 3. Conditional Bypass
+  // Only the 'seed' action engine requires a strict JSON SchemaDefinition for topological sorting.
+  // The 'migrate', 'optimize', and 'query' action LLMs are highly capable of reading raw SQL/Prisma schemas directly.
+  if (action !== "seed") {
+    logger.info({ msg: "Bypassing LLM normalization for non-seed action to save execution time", action, formatDetected });
+    return {
+      originalText: rawText,
+      formatDetected,
+      isFallback: true // Tells action engine to use raw text
+    };
+  }
+
   logger.info({ msg: "Normalizing schema via LLM", formatDetected });
 
   try {
     const response = await fetch(`${process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com"}/chat/completions`, {
       method: "POST",
+      signal,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`

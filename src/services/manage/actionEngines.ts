@@ -12,6 +12,7 @@ async function callEngineLLM(systemPrompt: string, userPrompt: string, context: 
 
   const response = await fetch(`${process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com"}/chat/completions`, {
     method: "POST",
+    signal: context.signal,
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`

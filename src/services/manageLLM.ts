@@ -16,17 +16,28 @@ export async function manageDatabaseLLM(request: ManageDatabaseRequestType): Pro
   }
 
   // Wrap the entire orchestration in a hard 45-second timeout
+  // We use AbortController to properly cancel fetch requests when timeout hits
+  const controller = new AbortController();
+  let timeoutId: NodeJS.Timeout;
+
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error("Database Manager timed out after 45 seconds.")), 45000);
+    timeoutId = setTimeout(() => {
+      controller.abort(); // Cancel the fetch requests
+      reject(new Error("Database Manager timed out after 45 seconds."));
+    }, 45000);
   });
 
-  return Promise.race([
-    executeManageFlow(request),
-    timeoutPromise
-  ]);
+  try {
+    return await Promise.race([
+      executeManageFlow(request, controller.signal),
+      timeoutPromise
+    ]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
 }
 
-async function executeManageFlow(request: ManageDatabaseRequestType): Promise<ManageDatabaseResponseType> {
+async function executeManageFlow(request: ManageDatabaseRequestType, signal: AbortSignal): Promise<ManageDatabaseResponseType> {
   // 1. Decode schema & validate size
   const schemaText = Buffer.from(request.schemaBase64, "base64").toString("utf-8");
   
@@ -39,9 +50,9 @@ async function executeManageFlow(request: ManageDatabaseRequestType): Promise<Ma
 
   // 2. Schema Normalization (LLM Call 1 - if needed)
   logger.info({ msg: "Starting schema normalization" });
-  const normalized = await normalizeSchema(schemaText);
+  const normalized = await normalizeSchema(schemaText, request.action, signal);
   
-  const context: EngineContext = { request, normalized };
+  const context: EngineContext = { request, normalized, signal };
   let engineResult: EngineResult;
 
   // 3. Route to specific engine (LLM Call 2)
